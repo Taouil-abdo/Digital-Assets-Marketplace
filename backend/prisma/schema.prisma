@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
+}
+
+enum AssetStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  auth0Id  String   @unique
+  email     String   @unique
+  name      String?
+  role      Role     @default(BUYER)
+  assets    Asset[]
+  orders    Order[]
+  createdAt DateTime @default(now())
+}
+
+model Asset {
+  id              String        @id @default(uuid())
+  title           String
+  description     String
+  price           Int           
+  category        String
+  status           AssetStatus   @default(ACTIVE)
+  privateFileKey  String        // S3 private key
+  sellerId        String
+  seller          User          @relation(fields: [sellerId], references: [id])
+  previews        AssetPreview[]
+  orderItems      OrderItem[]
+  createdAt       DateTime      @default(now())
+}
+
+model AssetPreview {
+  id        String   @id @default(uuid())
+  url       String
+  type      String   // image | video
+  assetId  String
+  asset    Asset    @relation(fields: [assetId], references: [id])
+}
+
+model Order {
+  id               String        @id @default(uuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id])
+  status           OrderStatus   @default(PENDING)
+  stripeSessionId  String?
+  items            OrderItem[]
+  createdAt        DateTime      @default(now())
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId  String
+  assetId  String
+  price    Int      
+  order    Order    @relation(fields: [orderId], references: [id])
+  asset    Asset    @relation(fields: [assetId], references: [id])
+}
