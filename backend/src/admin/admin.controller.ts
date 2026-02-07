@@ -30,9 +30,6 @@ export class AdminController {
     return this.adminService.updateUserRole(id, body.role);
   }
 
-  
-  
-  
   @Get('stats')
   async getStats() {
     return this.adminService.getMarketplaceStats();
